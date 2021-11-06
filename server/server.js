@@ -6,8 +6,20 @@ const cors = require("cors");
 const db = require("./config/database");
 const Url = require("./models/url");
 const { nanoid } = require("nanoid");
+const path = require("path");
+
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
+
+app.use(
+  "/scripts",
+  express.static(path.join(__dirname, "/node_modules/axios/dist/"))
+);
+app.use("/static", express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname + "/public/views/index.html"));
+});
 
 app.post("/url/shorten", async (req, res) => {
   try {
@@ -24,8 +36,12 @@ app.post("/url/shorten", async (req, res) => {
     res.status(200).json({ id: urlModel.id });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: err });
+    res.status(500).json({ error: "Internal server error!" });
   }
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname + "/public/views/404.html"));
 });
 
 app.listen(port, () => {
