@@ -7,6 +7,7 @@ const db = require("./config/database");
 const Url = require("./models/url");
 const { nanoid } = require("nanoid");
 const path = require("path");
+const validator = require("validator");
 
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
@@ -24,16 +25,20 @@ app.get("/", (req, res) => {
 app.post("/url/shorten", async (req, res) => {
   try {
     const url = req.query.url;
-    const urlRegex =
-      /^(?:(?:ht|f)tp(?:s?)\:\/\/|~\/|\/)?(?:\w+:\w+@)?((?:(?:[-\w\d{1-3}]+\.)+(?:com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|edu|co\.uk|ac\.uk|it|fr|tv|museum|asia|local|travel|[a-z]{2}))|((\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)(\.(\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)){3}))(?::[\d]{1,5})?(?:(?:(?:\/(?:[-\w~!$+|.,=]|%[a-f\d]{2})+)+|\/)+|\?|#)?(?:(?:\?(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)(?:&(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)*)*(?:#(?:[-\w~!$ |\/.,*:;=]|%[a-f\d]{2})*)?$/i;
-    if (!url || !urlRegex.test(url)) {
+    if (!validator.isURL(url)) {
       res.status(400).json({ error: "Invalid url!" });
+    } else {
+      const urlWithoutProtocol = url.replace(
+        /^(?:https?:\/\/)?(?:www\.)?/i,
+        ""
+      );
+      console.log("The url without protocol: " + urlWithoutProtocol);
+      const urlModel = await Url.findOrCreate({
+        where: { url: urlWithoutProtocol },
+        defaults: { url: urlWithoutProtocol, id: nanoid(7) },
+      });
+      res.status(200).json({ id: urlModel.id });
     }
-    const [urlModel, created] = await Url.findOrCreate({
-      where: { url: url },
-      defaults: { url: url, id: nanoid(8) },
-    });
-    res.status(200).json({ id: urlModel.id });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Internal server error!" });
