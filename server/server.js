@@ -54,7 +54,7 @@ app.post("/url/shorten", shortenLimiter, async (req, res) => {
         where: { url: urlWithoutProtocol },
         defaults: { url: urlWithoutProtocol, id: nanoid(7) },
       });
-      res.status(200).json({ id: urlModel.id });
+      res.status(200).json({ id: urlModel[0].dataValues.id });
     }
   } catch (err) {
     console.log(err);
