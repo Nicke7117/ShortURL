@@ -22,6 +22,17 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname + "/public/views/index.html"));
 });
 
+app.get("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const url = await Url.findOne({ where: { id: id } });
+    res.redirect(301, "https://" + url.url);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error!" });
+  }
+});
+
 app.post("/url/shorten", async (req, res) => {
   try {
     const url = req.query.url;
