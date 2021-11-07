@@ -8,6 +8,12 @@ const Url = require("./models/url");
 const { nanoid } = require("nanoid");
 const path = require("path");
 const validator = require("validator");
+const rateLimit = require("express-rate-limit");
+
+const shortenLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // limit each IP to 30 requests per windowMs
+});
 
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
@@ -33,7 +39,7 @@ app.get("/:id", async (req, res) => {
   }
 });
 
-app.post("/url/shorten", async (req, res) => {
+app.post("/url/shorten", shortenLimiter, async (req, res) => {
   try {
     const url = req.query.url;
     if (!validator.isURL(url)) {
